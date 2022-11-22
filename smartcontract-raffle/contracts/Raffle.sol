@@ -70,7 +70,15 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         s_participants.push(payable(msg.sender));
     }
 
-    function performUpkeep (bytes calldata) external {
+    function checkUpkeep(bytes memory) public override returns(bool upkeepNeeded, bytes memory) {
+        bool isOpen = (RaffleState.OPEN == s_raffleState);
+        bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
+        bool hasPlayers = (s_participants.length > 0);
+        bool hasBalance = address(this).balance > 0;
+        upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
+    }
+
+    function performUpkeep (bytes calldata) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
             revert Raffle_UpkeepNotNeeded(address(this).balance, s_participants.length, uint256(s_raffleState)); 
@@ -84,14 +92,6 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
             NUM_WORDS
         );
         emit RequestedRaffleWinner(requestId);
-    }
-
-    function checkUpkeep(bytes calldata) public override returns(bool upkeepNeeded, bytes memory) {
-        bool isOpen = (RaffleState.OPEN == s_raffleState);
-        bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
-        bool hasPlayers = (s_participants.length > 0);
-        bool hasBalance = address(this).balance > 0;
-        upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
     }
 
     function fulfillRandomWords(uint256, /* requestId */uint256[] memory randomWords) internal override {
@@ -120,4 +120,24 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     function getParticipant(uint256 index) public view returns(address) {
         return s_participants[index];
     } 
+
+    function getRaffleState() public view returns(RaffleState) {
+        return s_raffleState;
+    }
+
+    function getNumWords() public pure returns(uint32) {
+        return NUM_WORDS;
+    }
+
+    function getNumberOfParticipants() public view returns(uint256) {
+        return s_participants.length;
+    }
+
+    function getLatestTimestamp() public view returns(uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRequestConfirmations() public pure returns(uint256) {
+        return REQUEST_CONFIRMATIONS;
+    }
 }
