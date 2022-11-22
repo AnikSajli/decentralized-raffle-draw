@@ -10,9 +10,10 @@ import "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.s
 error Raffle_NotEnoughBalance();
 error Raffle_TransferFailed();
 error Raffle_NotOpen();
+error Raffle_UpkeepNotNeeded(uint256 currentBalance, uint256 playerCount, uint256 raffleState);
 
 contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
-    
+    /* Type declarations */
     enum RaffleState {
         OPEN,
         CALCULATING
@@ -56,6 +57,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         i_interval = interval;
     }
 
+    /* Functions */
     function enterRaffle() public payable {
         // require(msg.value >= i_entranceFee, "Not enough balance!");
         if (msg.value < i_entranceFee) {
@@ -68,7 +70,11 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         s_participants.push(payable(msg.sender));
     }
 
-    function requestRandomWinner() external {
+    function performUpkeep (bytes calldata) external {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle_UpkeepNotNeeded(address(this).balance, s_participants.length, uint256(s_raffleState)); 
+        }
         s_raffleState = RaffleState.CALCULATING;
         uint256 requestId = i_vrfCoordinator.requestRandomWords(
             i_gasLane,
@@ -80,17 +86,20 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         emit RequestedRaffleWinner(requestId);
     }
 
-    function checkUpkeep(bytes calldata) external override {
+    function checkUpkeep(bytes calldata) public override returns(bool upkeepNeeded, bytes memory) {
         bool isOpen = (RaffleState.OPEN == s_raffleState);
         bool timePassed = ((block.timestamp - s_lastTimeStamp) > i_interval);
-        bool hasPlayers = 
+        bool hasPlayers = (s_participants.length > 0);
+        bool hasBalance = address(this).balance > 0;
+        upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+    function fulfillRandomWords(uint256, /* requestId */uint256[] memory randomWords) internal override {
         uint256 indexOfWinner = randomWords[0] % s_participants.length;
         address payable recentWinner = s_participants[indexOfWinner];
         s_recentWinner = recentWinner;
         s_raffleState = RaffleState.OPEN;
+        s_lastTimeStamp = block.timestamp;
         s_participants = new address payable[](0);
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
@@ -99,6 +108,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         emit WinnerSelected(recentWinner);
     }
 
+    /* View functions */
     function getRecentWinner() public view returns(address) {
         return s_recentWinner;
     }
