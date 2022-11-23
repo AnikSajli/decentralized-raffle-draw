@@ -5,6 +5,7 @@ pragma solidity ^0.8.7;
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.sol";
+import "hardhat/console.sol";
 
 /* Errors */
 error Raffle_NotEnoughBalance();
@@ -20,8 +21,6 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     }
     
     /* State variables */
-    uint256 private immutable i_entranceFee;
-    address payable[] private s_participants;
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_gasLane;
     uint64 private immutable i_subscriptionId;
@@ -33,6 +32,8 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     RaffleState private s_raffleState;
     uint256 private s_lastTimeStamp;
     uint256 private immutable i_interval;
+    uint256 private immutable i_entranceFee;
+    address payable[] private s_participants;
 
     /* Events */
     event RaffleEnter(address indexed player);

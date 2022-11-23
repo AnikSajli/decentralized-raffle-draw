@@ -24,6 +24,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     } else {
         vrfCoordinatorV2Address = networkConfig[chainId]["vrfCoordinatorV2"]
         subscriptionId = networkConfig[chainId]["subscriptionId"]
+
     }
     const waitBlockConfirmations = developmentChains.includes(network.name)
         ? 1
@@ -31,12 +32,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
 
     const arguments = [
-        vrfCoordinatorV2Address,
-        subscriptionId,
-        networkConfig[chainId]["gasLane"],
-        networkConfig[chainId]["keepersUpdateInterval"],
         networkConfig[chainId]["raffleEntranceFee"],
+        vrfCoordinatorV2Address,
+        networkConfig[chainId]["gasLane"],
+        subscriptionId,
         networkConfig[chainId]["callbackGasLimit"],
+        networkConfig[chainId]["keepersUpdateInterval"],
     ]
     const raffle = await deploy("Raffle", {
         from: deployer,
