@@ -36,7 +36,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
     address payable[] private s_participants;
 
     /* Events */
-    event RaffleEnter(address indexed player);
+    event RaffleEnter(address indexed participant);
     event RequestedRaffleWinner(uint256 indexed requestId);
     event WinnerSelected(address indexed winner);
 
@@ -69,6 +69,7 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         }
 
         s_participants.push(payable(msg.sender));
+        emit RaffleEnter(msg.sender);
     }
 
     function checkUpkeep(bytes memory) public override returns(bool upkeepNeeded, bytes memory) {
@@ -140,5 +141,9 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     function getRequestConfirmations() public pure returns(uint256) {
         return REQUEST_CONFIRMATIONS;
+    }
+
+    function getInterval() public view returns(uint256) {
+        return i_interval;
     }
 }
