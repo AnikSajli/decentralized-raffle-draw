@@ -26,7 +26,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 assert.equal(
                     interval.toString(),
                     networkConfig[network.config.chainId]["keepersUpdateInterval"]
-                )
+                );
             })
         });
 
@@ -34,7 +34,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
               it("reverts when you don't pay enough", async () => {
                   await expect(raffle.enterRaffle()).to.be.revertedWith(
                       "Raffle_NotEnoughBalance"
-                  )
+                  );
               })
               it("records player when they enter", async () => {
                   await raffle.enterRaffle({ value: raffleEntranceFee })
@@ -45,7 +45,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   await expect(raffle.enterRaffle({ value: raffleEntranceFee })).to.emit( 
                       raffle,
                       "RaffleEnter"
-                  )
+                  );
               })
               it("doesn't allow entrance when raffle is calculating", async () => {
                   await raffle.enterRaffle({ value: raffleEntranceFee });
@@ -54,7 +54,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   await raffle.performUpkeep([]);
                   await expect(raffle.enterRaffle({ value: raffleEntranceFee })).to.be.revertedWith( 
                       "Raffle_NotOpen"
-                  )
+                  );
               })
           });
 
